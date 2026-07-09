@@ -53,6 +53,7 @@ CooperativeAction::CooperativeAction( const ActionCategory & category,
       M_first_turn_moment( 0.0 ),
       M_first_dash_power( 0.0 ),
       M_first_dash_angle( 0.0 ),
+      M_loft_angle( 0.0 ),
       M_duration_step( duration_step ),
       M_kick_count( 0 ),
       M_turn_count( 0 ),
@@ -141,6 +142,16 @@ void
 CooperativeAction::setFirstDashAngle( const AngleDeg & angle )
 {
     M_first_dash_angle = angle;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+ */
+void
+CooperativeAction::setLoftAngle( const double & loft_angle )
+{
+    M_loft_angle = loft_angle;
 }
 
 /*-------------------------------------------------------------------*/

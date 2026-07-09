@@ -78,6 +78,11 @@ private:
     double M_first_dash_power; //!< first dash speed (if necessary)
     rcsc::AngleDeg M_first_dash_angle; //!< first dash angle (relative to body) (if necessary)
 
+    double M_loft_angle; //!< kick loft angle in degrees (0 = grounded kick; v20 3D ball
+                          //!< extension only). Additive field, default 0.0 for every
+                          //!< existing (grounded) action -- does not change any existing
+                          //!< constructor's signature or call site.
+
     int M_duration_step; //!< action duration period
 
     int M_kick_count; //!< kick count (if necessary)
@@ -129,6 +134,8 @@ public:
     void setFirstDashPower( const double & power );
     void setFirstDashAngle( const rcsc::AngleDeg & angle );
 
+    void setLoftAngle( const double & loft_angle );
+
     void setDurationStep( const int duration_step );
 
     void setKickCount( const int count );
@@ -178,6 +185,10 @@ public:
     /*!
      */
     const rcsc::AngleDeg & firstDashAngle() const { return M_first_dash_angle; }
+
+    /*!
+     */
+    const double & loftAngle() const { return M_loft_angle; }
 
     /*!
      */

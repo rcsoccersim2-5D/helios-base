@@ -25,9 +25,11 @@ sample_player_SOURCES = \
 	basic_actions/body_kick_one_step.cpp \
 	basic_actions/body_kick_to_relative.cpp \
 	basic_actions/body_pass.cpp \
+	basic_actions/body_simple_kick_3d.cpp \
 	basic_actions/body_smart_kick.cpp \
 	basic_actions/body_stop_ball.cpp \
 	basic_actions/body_stop_dash.cpp \
+	basic_actions/body_trap_ball_3d.cpp \
 	basic_actions/focus_move_to_point.cpp \
 	basic_actions/focus_reset.cpp \
 	basic_actions/intention_dribble2008.cpp \
@@ -44,6 +46,7 @@ sample_player_SOURCES = \
 	basic_actions/view_synch.cpp \
 	planner/actgen_cross.cpp \
 	planner/actgen_direct_pass.cpp \
+	planner/actgen_lofted_pass.cpp \
 	planner/actgen_self_pass.cpp \
 	planner/actgen_shoot.cpp \
 	planner/actgen_short_dribble.cpp \
@@ -63,6 +66,7 @@ sample_player_SOURCES = \
 	planner/dribble.cpp \
 	planner/field_analyzer.cpp \
 	planner/hold_ball.cpp \
+	planner/lofted_pass_generator.cpp \
 	planner/neck_turn_to_receiver.cpp \
 	planner/pass.cpp \
 	planner/predict_state.cpp \
@@ -143,10 +147,12 @@ noinst_HEADERS = \
 	basic_actions/body_kick_one_step.h \
 	basic_actions/body_kick_to_relative.h \
 	basic_actions/body_pass.h \
+	basic_actions/body_simple_kick_3d.h \
 	basic_actions/body_smart_kick.h \
 	basic_actions/body_stop_ball.h \
 	basic_actions/body_stop_dash.h \
 	basic_actions/body_tackle_to_point.h \
+	basic_actions/body_trap_ball_3d.h \
 	basic_actions/body_turn_to_angle.h \
 	basic_actions/body_turn_to_ball.h \
 	basic_actions/body_turn_to_point.h \
@@ -173,6 +179,7 @@ noinst_HEADERS = \
 	planner/actgen_action_chain_length_filter.h \
 	planner/actgen_cross.h \
 	planner/actgen_direct_pass.h \
+	planner/actgen_lofted_pass.h \
 	planner/actgen_self_pass.h \
 	planner/actgen_shoot.h \
 	planner/actgen_short_dribble.h \
@@ -195,6 +202,7 @@ noinst_HEADERS = \
 	planner/field_analyzer.h \
 	planner/field_evaluator.h \
 	planner/hold_ball.h \
+	planner/lofted_pass_generator.h \
 	planner/neck_turn_to_receiver.h \
 	planner/pass.h \
 	planner/pass_checker.h \

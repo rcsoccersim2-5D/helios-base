@@ -14,9 +14,11 @@ add_executable(sample_player
   basic_actions/body_kick_one_step.cpp
   basic_actions/body_kick_to_relative.cpp
   basic_actions/body_pass.cpp
+  basic_actions/body_simple_kick_3d.cpp
   basic_actions/body_smart_kick.cpp
   basic_actions/body_stop_ball.cpp
   basic_actions/body_stop_dash.cpp
+  basic_actions/body_trap_ball_3d.cpp
   basic_actions/focus_move_to_point.cpp
   basic_actions/focus_reset.cpp
   basic_actions/intention_dribble2008.cpp
@@ -33,6 +35,7 @@ add_executable(sample_player
   basic_actions/view_synch.cpp
   planner/actgen_cross.cpp
   planner/actgen_direct_pass.cpp
+  planner/actgen_lofted_pass.cpp
   planner/actgen_self_pass.cpp
   planner/actgen_shoot.cpp
   planner/actgen_short_dribble.cpp
@@ -52,6 +55,7 @@ add_executable(sample_player
   planner/dribble.cpp
   planner/field_analyzer.cpp
   planner/hold_ball.cpp
+  planner/lofted_pass_generator.cpp
   planner/neck_turn_to_receiver.cpp
   planner/pass.cpp
   planner/predict_state.cpp

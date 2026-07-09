@@ -49,7 +49,8 @@ public:
           const int duration_step,
           const int kick_count,
           const bool final_action,
-          const char * description );
+          const char * description,
+          const double & loft_angle = 0.0 );
 
 };
 

@@ -49,7 +49,8 @@ Pass::Pass( const int passer,
             const int duration_step,
             const int kick_count,
             const bool final_action,
-            const char * description )
+            const char * description,
+            const double & loft_angle )
     : CooperativeAction( CooperativeAction::Pass,
                          passer,
                          receive_point,
@@ -60,6 +61,7 @@ Pass::Pass( const int passer,
     setFirstBallSpeed( ball_speed );
     setKickCount( kick_count );
     setFinalAction( final_action );
+    setLoftAngle( loft_angle );
 }
 
 }

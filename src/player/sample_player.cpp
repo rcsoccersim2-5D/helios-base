@@ -59,6 +59,7 @@
 #include "basic_actions/body_go_to_point.h"
 #include "basic_actions/body_intercept.h"
 #include "basic_actions/body_kick_one_step.h"
+#include "basic_actions/body_trap_ball_3d.h"
 #include "basic_actions/neck_scan_field.h"
 #include "basic_actions/neck_turn_to_ball_or_scan.h"
 #include "basic_actions/view_synch.h"
@@ -600,6 +601,14 @@ SamplePlayer::doPreprocess()
     this->setViewAction( new View_Tactical() );
 
     //
+    // check airborne ball trap (v20 3D ball extension)
+    //
+    if ( doTrapAirborneBall() )
+    {
+        return true;
+    }
+
+    //
     // check shoot chance
     //
     if ( doShoot() )
@@ -635,6 +644,46 @@ SamplePlayer::doPreprocess()
 
     return false;
 }
+
+/*-------------------------------------------------------------------*/
+/*!
+  \brief check if the ball is currently airborne (v20 3D ball extension)
+  and, if so and kickable, trap/deaden it via Body_TrapBall3D instead of
+  falling through to the (grounded-ball-only) shoot/pass/dribble chain.
+
+  For a 2d_mode=true server (or any server not negotiating protocol
+  version >= 20), wm.ball().posZ() is always 0, so this method
+  always returns false immediately -- zero behavior change for legacy
+  servers, the rest of doPreprocess()'s chain runs exactly as before.
+*/
+bool
+SamplePlayer::doTrapAirborneBall()
+{
+    const WorldModel & wm = this->world();
+
+    if ( wm.ball().posZ() <= 0.0 )
+    {
+        // ball is grounded (or a 2d_mode=true / pre-v20 server): nothing
+        // to do here, let the existing shoot/pass/dribble chain handle it.
+        return false;
+    }
+
+    if ( ! wm.self().isKickable() )
+    {
+        // ball is airborne but out of reach this cycle: decline, the
+        // normal intercept/positioning logic downstream will chase it.
+        return false;
+    }
+
+    dlog.addText( Logger::TEAM,
+                  __FILE__": (doTrapAirborneBall) ball is airborne and kickable. trap it" );
+
+    Body_TrapBall3D().execute( this );
+    this->setNeckAction( new Neck_TurnToBallOrScan( 0 ) );
+
+    return true;
+}
+
 
 /*-------------------------------------------------------------------*/
 /*!
@@ -788,6 +837,7 @@ SamplePlayer::createFieldEvaluator() const
 #include "actgen_direct_pass.h"
 #include "actgen_self_pass.h"
 #include "actgen_strict_check_pass.h"
+#include "actgen_lofted_pass.h"
 #include "actgen_short_dribble.h"
 #include "actgen_simple_dribble.h"
 #include "actgen_shoot.h"
@@ -810,6 +860,12 @@ SamplePlayer::createActionGenerator() const
     //
     g->addGenerator( new ActGen_MaxActionChainLengthFilter
                      ( new ActGen_StrictCheckPass(), 1 ) );
+
+    //
+    // lofted pass (v20 3D ball extension)
+    //
+    g->addGenerator( new ActGen_MaxActionChainLengthFilter
+                     ( new ActGen_LoftedPass(), 1 ) );
 
     //
     // cross

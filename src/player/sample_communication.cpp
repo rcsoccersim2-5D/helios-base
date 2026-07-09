@@ -593,6 +593,19 @@ SampleCommunication::goalieSaySituation( const rcsc::PlayerAgent * agent )
 bool
 SampleCommunication::sayBallAndPlayers( PlayerAgent * agent )
 {
+    // TODO(3d-client-support, Step 11): ball communication is temporarily DISABLED.
+    // BallMessage/BallPlayerMessage/BallGoalieMessage (rcsc/player/say_message_builder.h)
+    // only encode the ball's 2D (x,y) position/velocity -- they have no z-awareness, even
+    // though the ball can now be airborne (see BallObject::pos3D()/posZ(), Step 3). Sending
+    // a 2D-only ball position to teammates while the ball may be airborne could mislead a
+    // receiving teammate into believing the ball is grounded when it is not. Re-enable this
+    // function (remove the early return below) once a 3D-aware ball message class + matching
+    // hear-side SayMessageParser subclass exist -- see plan_spec.md's Step 11 (Communication
+    // Widening, optional/stretch) for the intended design (new widened message wire format,
+    // branching to the new class only when ball z != 0 to preserve the existing 6-char
+    // message-size budget for the common grounded case).
+    return false;
+
     const WorldModel & wm = agent->world();
 
     const int current_len = agent->effector().getSayMessageLength();
@@ -1116,6 +1129,14 @@ SampleCommunication::sayBallAndPlayers( PlayerAgent * agent )
 bool
 SampleCommunication::sayBall( PlayerAgent * agent )
 {
+    // TODO(3d-client-support, Step 11): ball communication is temporarily DISABLED.
+    // See the identical TODO in sayBallAndPlayers() above for the full rationale (2D-only
+    // BallMessage/BallPlayerMessage/BallGoalieMessage wire format has no z-awareness yet).
+    // This function is currently only reachable via the dead `#else` branch in execute()
+    // (see the `#if 1 ... #else ... #endif` block), but is guarded here too in case that
+    // branch is ever re-enabled before Step 11's 3D-aware message class is implemented.
+    return false;
+
     const WorldModel & wm = agent->world();
 
     const int current_len = agent->effector().getSayMessageLength();

@@ -93,6 +93,7 @@ private:
     bool doShoot();
     bool doForceKick();
     bool doHeardPassReceive();
+    bool doTrapAirborneBall();
 
 public:
     virtual
