@@ -85,7 +85,7 @@ public:
     static const int NUM_LOFTS = 3;
 
     //! max cycles simulated per candidate before giving up on it
-    static const int MAX_SIMULATION_STEP = 25;
+    static const int MAX_SIMULATION_STEP = 100;
 
 private:
 
@@ -134,11 +134,23 @@ private:
                                               const double & loft_deg ) const;
 
     /*!
-      \brief find the player (teammate or opponent) nearest to a ground
-      point, among all players with a valid position.
+      \brief find the best player (teammate or opponent) to reach a ground
+      point by simulation step \p step, among all players with a valid
+      position. A player whose raw distance already exceeds step + 5.0
+      cannot get there under any circumstance and is skipped outright;
+      otherwise a simple turn+dash cycle estimate (mirroring
+      StrictCheckPassGenerator's predictReceiverReachStep(), but without
+      its penalty/pass-type tuning) is used to discard players who could
+      not actually arrive by \p step, and the nearest of the remaining,
+      reachable players is returned.
+      \param wm world model
+      \param pos ground point the ball is simulated to reach
+      \param step the simulation cycle (from the ball-flight loop) at
+             which \p pos is reached -- i.e. the deadline for reaching it
      */
     const rcsc::AbstractPlayerObject * nearestPlayer( const rcsc::WorldModel & wm,
-                                                       const rcsc::Vector2D & pos ) const;
+                                                       const rcsc::Vector2D & pos,
+                                                       const int step ) const;
 };
 
 #endif

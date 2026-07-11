@@ -36,6 +36,7 @@
 #include "lofted_pass_generator.h"
 
 #include "pass.h"
+#include "field_analyzer.h"
 
 #include <rcsc/player/world_model.h>
 #include <rcsc/player/abstract_player_object.h>
@@ -52,8 +53,8 @@ using namespace rcsc;
 
 namespace {
 const double DIR_STEP = 360.0 / LoftedPassGenerator::ANGLE_DIVS; // 30 deg
-const double POWERS[ LoftedPassGenerator::NUM_POWERS ] = { 50.0, 80.0, 100.0 };
-const double LOFTS[ LoftedPassGenerator::NUM_LOFTS ] = { 30.0, 45.0, 60.0 };
+const double POWERS[ LoftedPassGenerator::NUM_POWERS ] = { 70.0, 80.0, 100.0 };
+const double LOFTS[ LoftedPassGenerator::NUM_LOFTS ] = { 45.0, 60.0 };
 }
 
 /*-------------------------------------------------------------------*/
@@ -101,6 +102,11 @@ LoftedPassGenerator::generate( const WorldModel & wm )
     {
         return;
     }
+    if ( wm.gameMode().type() != GameMode::PlayOn
+         && ! wm.gameMode().isPenaltyKickMode() )
+    {
+        return;
+    }
     M_update_time = wm.time();
 
     clear();
@@ -122,7 +128,7 @@ LoftedPassGenerator::createCourses( const WorldModel & wm )
 {
     const ServerParam & SP = ServerParam::i();
 
-    for ( int a = 0; a < ANGLE_DIVS; ++a )
+    for ( int a = 0; a < 12; ++a )
     {
         const double dir_deg = a * DIR_STEP;
 
@@ -166,13 +172,17 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     //
     // forward kick model: same (power, kickRate) -> ground-plane speed
     // relationship used by Body_SimpleKick3D/Body_KickOneStep, run
-    // forward instead of solved for. loft split mirrors rcssserver's
-    // Player::kickImpl() (loftPowerCost reduces total available push,
-    // then cos/sin splits it into horizontal/vertical components).
+    // forward instead of solved for. Mirrors rcssserver's (2026-07-10
+    // reworked) Player::kickImpl(): the only power penalty left is
+    // heightPowerCost() * (current ball height / player_height) -- loft
+    // itself is now a pure geometric cos/sin split of eff_power with NO
+    // extra cost for aiming upward (loft_power_cost was removed).
     //
     const double loft_rad = loft_deg * M_PI / 180.0;
+    const double height_frac = std::max( 0.0, wm.ball().posZ() ) / SP.playerHeight();
+
     double eff_power_total = power * wm.self().kickRate();
-    eff_power_total *= ( 1.0 - SP.loftPowerCost() * ( loft_rad / ( M_PI * 0.5 ) ) );
+    eff_power_total *= ( 1.0 - SP.heightPowerCost() * height_frac );
     if ( eff_power_total < 0.0 )
     {
         eff_power_total = 0.0;
@@ -197,20 +207,56 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
 
     const double decay = SP.ballDecay();
 
-    // running sum of the geometric decay series (1 + decay + decay^2 + ...),
-    // accumulated incrementally across the t loop below instead of being
-    // recomputed from scratch each cycle (O(t) total instead of O(t^2)).
-    double decay_sum = 0.0;
-    double decay_pow = 1.0;
+    // As of the 2026-07-10 physics rework the ball has ZERO horizontal
+    // friction while airborne -- ground_decay friction only applies once
+    // pos_z<=0 (rcssserver's Ball::incZ()/applyBounceEnergyLoss()). So the
+    // horizontal position is constant-velocity (ball_pos + vel_xy*t) for as
+    // long as the closed-form z(t) stays above 0; once it first lands, the
+    // usual decaying-velocity ground model (and one bounce-restitution
+    // scaling of the whole velocity vector) takes over for later steps.
+    bool landed = false;
+    Vector2D landed_pos;
+    Vector2D landed_vel;
+    double decay_sum_since_landing = 0.0;
+    double decay_pow_since_landing = 1.0;
 
     for ( int t = 1; t <= MAX_SIMULATION_STEP; ++t )
     {
-        // ground-plane position: same decaying-velocity inertia model as
-        // rcsc::BallObject::inertiaPoint()/PlayerType::inertiaPoint().
-        decay_sum += decay_pow;
-        decay_pow *= decay;
+        // closed-form vertical position (rcsc::InterceptSimulatorSelf3D's
+        // z(t) = z0 + t*vz0 - g*t*(t+1)/2 recurrence), unclamped so we can
+        // detect the exact step the ball first reaches the ground.
+        const double z_raw = z0 + t * vz0 - 0.5 * g * t * ( t + 1 );
 
-        const Vector2D pos_t = ball_pos + vel_xy * decay_sum;
+        Vector2D pos_t;
+        double z_t;
+
+        if ( ! landed && z_raw > 0.0 )
+        {
+            // still airborne: no horizontal friction at all.
+            pos_t = ball_pos + vel_xy * t;
+            z_t = z_raw;
+        }
+        else
+        {
+            if ( ! landed )
+            {
+                // first cycle the ball touches the ground: apply the
+                // ground-bounce restitution to the WHOLE velocity vector
+                // once (mirrors rcssserver's applyBounceEnergyLoss()), then
+                // fall back to the normal decaying ground-roll model.
+                landed = true;
+                landed_pos = ball_pos + vel_xy * t;
+                landed_vel = vel_xy * SP.ballBounceRestitution();
+                decay_sum_since_landing = 0.0;
+                decay_pow_since_landing = 1.0;
+            }
+
+            decay_sum_since_landing += decay_pow_since_landing;
+            decay_pow_since_landing *= decay;
+
+            pos_t = landed_pos + landed_vel * decay_sum_since_landing;
+            z_t = 0.0;
+        }
 
         // out of pitch: this candidate is not viable, stop simulating it.
         if ( std::fabs( pos_t.x ) > SP.pitchHalfLength() + 5.0
@@ -219,21 +265,13 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
             return CooperativeAction::Ptr();
         }
 
-        // closed-form vertical position (rcsc::InterceptSimulatorSelf3D's
-        // z(t) = z0 + t*vz0 - g*t*(t+1)/2 recurrence), clamped at ground.
-        double z_t = z0 + t * vz0 - 0.5 * g * t * ( t + 1 );
-        if ( z_t < 0.0 )
-        {
-            z_t = 0.0;
-        }
-
         if ( z_t > player_height )
         {
             // still too high for anyone to touch it yet.
             continue;
         }
 
-        const AbstractPlayerObject * receiver = nearestPlayer( wm, pos_t );
+        const AbstractPlayerObject * receiver = nearestPlayer( wm, pos_t, t );
 
         if ( ! receiver )
         {
@@ -264,6 +302,7 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
         }
 
         // a teammate can receive the lofted ball at (pos_t, cycle t).
+
         CooperativeAction::Ptr pass( new Pass( wm.self().unum(),
                                                receiver->unum(),
                                                pos_t,
@@ -277,15 +316,62 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     }
 
     return CooperativeAction::Ptr();
+
 }
 
 /*-------------------------------------------------------------------*/
 /*!
 
  */
+namespace {
+
+/*!
+  \brief very simple turn+dash cycle estimate for one player to reach
+  \p pos, in the same spirit as StrictCheckPassGenerator's
+  predictReceiverReachStep() -- but without its penalty_distance_/
+  pass-type tuning, since this generator only needs a coarse feasibility
+  check, not a precisely-tuned receive point.
+ */
+int
+simple_reach_step( const AbstractPlayerObject * player,
+                   const Vector2D & pos,
+                   const double & dist )
+{
+    const PlayerType * ptype = player->playerTypePtr();
+    if ( ! ptype )
+    {
+        return std::numeric_limits< int >::max();
+    }
+
+    const int n_turn = ( player->bodyCount() > 0
+                        ? 0
+                        : FieldAnalyzer::predict_player_turn_cycle( ptype,
+                                                                    player->body(),
+                                                                    player->vel().r(),
+                                                                    dist,
+                                                                    ( pos - player->pos() ).th(),
+                                                                    ptype->kickableArea(),
+                                                                    false ) );
+
+    double dash_dist = dist - ptype->kickableArea();
+    if ( dash_dist < 0.0 )
+    {
+        dash_dist = 0.0;
+    }
+
+    const int n_dash = ptype->cyclesToReachDistance( dash_dist );
+
+    return ( n_turn == 0
+             ? n_dash
+             : n_turn + n_dash + 1 ); // 1 step penalty for observation delay
+}
+
+}
+
 const AbstractPlayerObject *
 LoftedPassGenerator::nearestPlayer( const WorldModel & wm,
-                                    const Vector2D & pos ) const
+                                    const Vector2D & pos,
+                                    const int step ) const
 {
     const AbstractPlayerObject * best = static_cast< const AbstractPlayerObject * >( 0 );
     double best_dist2 = std::numeric_limits< double >::max();
@@ -296,12 +382,31 @@ LoftedPassGenerator::nearestPlayer( const WorldModel & wm,
           ++it )
     {
         if ( ! (*it) || (*it)->unum() == Unum_Unknown ) continue;
-        const double d2 = (*it)->pos().dist2( pos );
-        if ( d2 < best_dist2 )
+
+        const double dist = (*it)->pos().dist( pos );
+
+        // quick reject: even with zero turn/dash cost, this player cannot
+        // be anywhere near pos by step -- no need to run the full estimate.
+        if ( dist > step + 5.0 )
         {
-            best_dist2 = d2;
-            best = *it;
+            continue;
         }
+
+        const double d2 = dist * dist;
+        if ( d2 >= best_dist2 )
+        {
+            // already worse than the current best on raw distance, and a
+            // turn/dash estimate can only make this candidate look worse.
+            continue;
+        }
+
+        if ( simple_reach_step( *it, pos, dist ) > step )
+        {
+            continue;
+        }
+
+        best_dist2 = d2;
+        best = *it;
     }
 
     const AbstractPlayerObject::Cont & their_players = wm.theirPlayers();
@@ -310,12 +415,27 @@ LoftedPassGenerator::nearestPlayer( const WorldModel & wm,
           ++it )
     {
         if ( ! (*it) || (*it)->unum() == Unum_Unknown ) continue;
-        const double d2 = (*it)->pos().dist2( pos );
-        if ( d2 < best_dist2 )
+
+        const double dist = (*it)->pos().dist( pos );
+
+        if ( dist > step + 5.0 )
         {
-            best_dist2 = d2;
-            best = *it;
+            continue;
         }
+
+        const double d2 = dist * dist + 5.0;
+        if ( d2 >= best_dist2 )
+        {
+            continue;
+        }
+
+        if ( simple_reach_step( *it, pos, dist ) > step )
+        {
+            continue;
+        }
+
+        best_dist2 = d2;
+        best = *it;
     }
 
     return best;

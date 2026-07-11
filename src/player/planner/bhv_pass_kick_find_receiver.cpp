@@ -44,6 +44,7 @@
 #include "basic_actions/bhv_scan_field.h"
 #include "basic_actions/body_hold_ball.h"
 #include "basic_actions/body_kick_one_step.h"
+#include "basic_actions/body_simple_kick_3d.h"
 #include "basic_actions/body_smart_kick.h"
 #include "basic_actions/body_stop_ball.h"
 #include "basic_actions/body_turn_to_point.h"
@@ -65,6 +66,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 // #define DEBUG_PRINT
 
@@ -402,15 +404,42 @@ Bhv_PassKickFindReceiver::doPassKick( PlayerAgent * agent,
                   pass.targetPoint().x, pass.targetPoint().y,
                   pass.firstBallSpeed() );
 
-    if ( pass.kickCount() == 1
+    std::cout << "doPassKick cycle=" << agent->world().time().cycle()
+              << " description=" << pass.description()
+              << " loftAngle=" << pass.loftAngle()
+              << " targetUnum=" << pass.targetPlayerUnum()
+              << " firstBallSpeed=" << pass.firstBallSpeed()
+              << " kickCount=" << pass.kickCount()
+              << std::endl;
+
+    if ( pass.loftAngle() > 0.0 )
+    {
+        // v20 3D ball extension: this pass was planned as a lofted kick
+        // (see LoftedPassGenerator) -- forward the loft angle to the server
+        // via Body_SimpleKick3D instead of silently dropping it through the
+        // 2D-only Body_KickOneStep/Body_SmartKick path below.
+        std::cout << "doPassKick cycle=" << agent->world().time().cycle()
+                  << " EXECUTING Body_SimpleKick3D loft=" << pass.loftAngle()
+                  << std::endl;
+        Body_SimpleKick3D( pass.targetPoint(),
+                           pass.firstBallSpeed(),
+                           pass.loftAngle() ).execute( agent );
+    }
+    else if ( pass.kickCount() == 1
          || agent->world().gameMode().type() != GameMode::PlayOn )
     {
+        std::cout << "doPassKick cycle=" << agent->world().time().cycle()
+                  << " EXECUTING Body_KickOneStep (2D, loft IGNORED if nonzero)"
+                  << std::endl;
         Body_KickOneStep( pass.targetPoint(),
                           pass.firstBallSpeed() ).execute( agent );
 
     }
     else
     {
+        std::cout << "doPassKick cycle=" << agent->world().time().cycle()
+                  << " EXECUTING Body_SmartKick (2D, loft IGNORED if nonzero)"
+                  << std::endl;
         Body_SmartKick( pass.targetPoint(),
                         pass.firstBallSpeed(),
                         pass.firstBallSpeed() * 0.96,
