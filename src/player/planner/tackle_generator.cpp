@@ -227,6 +227,14 @@ TackleGenerator::generate( const WorldModel & wm )
         return;
     }
 
+    if ( ! ServerParam::i().is2dMode()
+         && wm.ball().posZ() > ServerParam::i().tackleHeight() )
+    {
+        // dlog.addText( Logger::CLEAR,
+        //               __FILE__": ball is too high to tackle" );
+        return;
+    }
+
     if ( wm.self().tackleProbability() < 0.001
          && wm.self().foulProbability() < 0.001 )
     {

@@ -2,7 +2,7 @@
 
 /*!
   \file body_trap_ball_3d.h
-  \brief trap (deaden) an airborne ball using the v20 (stop_ball) command.
+  \brief trap (deaden) an airborne ball using the v20 (chest_trap) command.
 */
 
 /*
@@ -36,8 +36,8 @@
 
 /*!
   \class Body_TrapBall3D
-  \brief trap (immediately deaden) an airborne ball via the v20 `(stop_ball)`
-  protocol command (librcsc's `PlayerAgent::doStopBall()`, see Step 6).
+  \brief trap (immediately deaden) an airborne ball via the v20 `(chest_trap)`
+  protocol command (librcsc's `PlayerAgent::doChestTrap()`, see Step 6).
 
   NOTE: deliberately NOT named `Body_StopBall` -- that name is already taken
   by the existing, unrelated dash/kick-based ball-decelerating behavior
@@ -46,7 +46,7 @@
 
   execute() only issues the command when `wm.ball().posZ() > 0.0 &&
   wm.self().isKickable()`, mirroring the server's own silent-reject gate on
-  `stop_ball` (rejected when the ball is not kickable) -- there is no point
+  `chest_trap` (rejected when the ball is not kickable) -- there is no point
   sending the command when the server will silently ignore it. Declines
   (`return false`) for the grounded-ball case, in which case a caller should
   use `Body_StopBall` (or an ordinary kick) instead.
@@ -65,7 +65,7 @@ public:
     /*!
       \brief execute action
       \param agent pointer to the agent itself
-      \return true if the (stop_ball) command was registered, false if
+      \return true if the (chest_trap) command was registered, false if
       declined (ball is grounded, or not currently kickable).
     */
     bool execute( rcsc::PlayerAgent * agent );

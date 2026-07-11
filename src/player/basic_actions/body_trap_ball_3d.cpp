@@ -2,7 +2,7 @@
 
 /*!
   \file body_trap_ball_3d.cpp
-  \brief trap (deaden) an airborne ball using the v20 (stop_ball) command.
+  \brief trap (deaden) an airborne ball using the v20 (chest_trap) command.
 */
 
 /*
@@ -64,12 +64,12 @@ Body_TrapBall3D::execute( PlayerAgent * agent )
 
     if ( ! wm.self().isKickable() )
     {
-        // mirrors the server's own silent-reject gate on (stop_ball) --
+        // mirrors the server's own silent-reject gate on (chest_trap) --
         // no point issuing the command when it will be rejected.
         dlog.addText( Logger::ACTION,
                       __FILE__": ball is airborne but not kickable. declining" );
         return false;
     }
 
-    return agent->doStopBall();
+    return agent->doChestTrap();
 }
