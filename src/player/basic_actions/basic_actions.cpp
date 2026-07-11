@@ -148,6 +148,12 @@ Body_TackleToPoint::execute( PlayerAgent * agent )
     const WorldModel & wm = agent->world();
     const ServerParam & sp = ServerParam::i();
 
+    if ( ! sp.is2dMode()
+         && wm.ball().posZ() > sp.tackleHeight() )
+    {
+        return false;
+    }
+
     if ( wm.self().tackleProbability() < M_min_prob )
     {
         return false;

@@ -57,6 +57,14 @@ Bhv_BasicTackle::execute( PlayerAgent * agent )
     const ServerParam & SP = ServerParam::i();
     const WorldModel & wm = agent->world();
 
+    if ( ! SP.is2dMode()
+         && wm.ball().posZ() > SP.tackleHeight() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": (execute) ball is too high to tackle" );
+        return false;
+    }
+
     bool use_foul = false;
     double tackle_prob = wm.self().tackleProbability();
 
