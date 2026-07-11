@@ -37,21 +37,23 @@
 
 /*!
   \class Body_SimpleKick3D
-  \brief one-step loft-kick action, only for an AIRBORNE ball (v20 3D ball
-  extension).
+  \brief one-step kick action that forwards an explicit loft angle to the
+  server (v20 3D ball extension). Usable both to launch a currently-grounded
+  ball into a lofted trajectory (the dominant use case: a lofted pass kick,
+  where the ball always starts grounded at the kicker's feet) and to re-kick
+  an already-airborne ball.
 
-  This class's very first precondition is `wm.ball().isGrounded()` (librcsc
-  v20 BallObject belief): when the ball IS grounded, this class declines to
-  act (`execute()` returns false), so the caller should fall back to
-  helios-base's existing, completely UNMODIFIED Body_KickOneStep / Body_SmartKick
-  / KickTable forks (basic_actions/body_kick_one_step.h, body_smart_kick.h,
-  kick_table.h) for that (still by far the most common) case.
+  Unlike an earlier draft, this class does NOT decline when the ball is
+  grounded -- the caller decides whether to use this class instead of the
+  existing 2D-only Body_KickOneStep / Body_SmartKick / KickTable forks
+  (basic_actions/body_kick_one_step.h, body_smart_kick.h, kick_table.h),
+  typically by checking whether a nonzero loft angle was requested.
 
-  When the ball is airborne (the only case this class targets), it reuses
-  helios-base's own forked KickTable::calc_max_velocity() to solve for the 2D
-  kick power/direction exactly like Body_KickOneStep, then forwards the result
-  through librcsc's v20 PlayerAgent::doKick(power, dir, loft) 3-arg overload so
-  the server receives a lofted kick command instead of a flat one.
+  It reuses helios-base's own forked KickTable::calc_max_velocity() to solve
+  for the 2D kick power/direction exactly like Body_KickOneStep, then forwards
+  the result through librcsc's v20 PlayerAgent::doKick(power, dir, loft)
+  3-arg overload so the server receives a lofted kick command instead of a
+  flat one.
 
   This mirrors librcsc's own rcsc::Body_SmartKick3D (rcsc/action/body_smart_kick_3d.h)
   one-for-one, since helios-base independently forks the identical

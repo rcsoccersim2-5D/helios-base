@@ -57,14 +57,15 @@ Body_SimpleKick3D::execute( PlayerAgent * agent )
 
     const WorldModel & wm = agent->world();
 
-    if ( wm.ball().isGrounded() )
-    {
-        // ball is on the ground: hand off to the existing, unmodified
-        // Body_SmartKick / KickTable / Body_KickOneStep for this (common) case.
-        dlog.addText( Logger::KICK,
-                      __FILE__": ball is grounded. declining, use the 2D kick primitives instead" );
-        return false;
-    }
+    // NOTE: unlike an earlier draft of this class, we do NOT decline when
+    // the ball is grounded. The dominant real use case is launching a
+    // currently-grounded ball into a lofted trajectory (e.g. a lofted pass
+    // kick-off, where the ball always starts grounded at the kicker's feet)
+    // -- declining here would make this class unusable for that case. The
+    // kick-solving math below (KickTable::calc_max_velocity + doKick with
+    // loft) is valid regardless of whether the ball starts grounded or is
+    // already airborne (e.g. re-kicking a mid-flight ball); the caller
+    // decides when to use this class (typically: pass.loftAngle() > 0.0).
 
     if ( ! wm.self().isKickable() )
     {
