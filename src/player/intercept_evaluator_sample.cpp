@@ -118,7 +118,11 @@ InterceptEvaluatorSample::evaluate( const WorldModel & wm,
                            ? SP.keepawayWidth() * 0.5 - 1.0
                            : SP.pitchHalfWidth() - 1.0 );
 
-    const Vector2D ball_pos = wm.ball().inertiaPoint( action.reachStep() );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( action.reachStep(), ball_pos ) )
+    {
+        return -std::numeric_limits< double >::max();
+    }
 
 #ifdef DEBUG_PRINT
     dlog.addText( Logger::INTERCEPT,

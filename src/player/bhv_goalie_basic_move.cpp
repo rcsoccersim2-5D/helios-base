@@ -152,7 +152,11 @@ Bhv_GoalieBasicMove::getTargetPoint( PlayerAgent * agent )
             = std::min( wm.interceptTable().teammateStep(),
                         wm.interceptTable().opponentStep() );
     }
-    const Vector2D base_pos = wm.ball().inertiaPoint( ball_reach_step );
+    Vector2D base_pos;
+    if ( ! wm.ballPositionAt( ball_reach_step, base_pos ) )
+    {
+        base_pos = wm.ball().pos();
+    }
 
 
     //---------------------------------------------------------//

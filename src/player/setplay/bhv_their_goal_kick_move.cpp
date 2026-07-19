@@ -213,7 +213,11 @@ Bhv_TheirGoalKickMove::doChaseBall( PlayerAgent * agent )
         return false;
     }
 
-    Vector2D get_pos = wm.ball().inertiaPoint( self_min );
+    Vector2D get_pos;
+    if ( ! wm.ballPositionAt( self_min, get_pos ) )
+    {
+        get_pos = wm.ball().pos();
+    }
 
     const double pen_x = ServerParam::i().theirPenaltyAreaLineX() - 1.0;
     const double pen_y = ServerParam::i().penaltyAreaHalfWidth() + 1.0;

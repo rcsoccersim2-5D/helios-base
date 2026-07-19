@@ -747,7 +747,11 @@ SampleCommunication::sayBallAndPlayers( PlayerAgent * agent )
                                                  wm.interceptTable().teammateStep() ),
                                        wm.interceptTable().selfStep() );
 
-        const Vector2D ball_pos = wm.ball().inertiaPoint( min_step );
+        Vector2D ball_pos;
+        if ( ! wm.ballPositionAt( min_step, ball_pos ) )
+        {
+            return false;
+        }
 
         for ( int unum = 1; unum <= 11; ++unum )
         {
@@ -1235,7 +1239,11 @@ SampleCommunication::sayBall( PlayerAgent * agent )
                       __FILE__": (sayBall) say ball status. next cycle kickable." );
     }
 
-    Vector2D ball_trap_pos = wm.ball().inertiaPoint( our_min );
+    Vector2D ball_trap_pos;
+    if ( ! wm.ballPositionAt( our_min, ball_trap_pos ) )
+    {
+        return false;
+    }
 
     //
     // ball & opponent goalie
@@ -1276,7 +1284,11 @@ SampleCommunication::sayBall( PlayerAgent * agent )
 
         const PlayerObject * opponent = static_cast< const PlayerObject * >( 0 );
 
-        Vector2D opp_trap_pos = wm.ball().inertiaPoint( opp_min );
+        Vector2D opp_trap_pos;
+        if ( ! wm.ballPositionAt( opp_min, opp_trap_pos ) )
+        {
+            return false;
+        }
 
         for ( PlayerObject::Cont::const_iterator o = wm.opponentsFromBall().begin(),
                   end = wm.opponentsFromBall().end();
@@ -1483,7 +1495,11 @@ SampleCommunication::sayOffsideLine( PlayerAgent * agent )
 
     int min_step = std::min( s_min, t_min );
 
-    Vector2D ball_pos = wm.ball().inertiaPoint( min_step );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( min_step, ball_pos ) )
+    {
+        return false;
+    }
 
     if ( 0.0 < ball_pos.x
          && ball_pos.x < 37.0
@@ -1530,7 +1546,11 @@ SampleCommunication::sayDefenseLine( PlayerAgent * agent )
 
     int opp_min = wm.interceptTable().opponentStep();
 
-    Vector2D opp_trap_pos = wm.ball().inertiaPoint( opp_min );
+    Vector2D opp_trap_pos;
+    if ( ! wm.ballPositionAt( opp_min, opp_trap_pos ) )
+    {
+        return false;
+    }
 
     if ( wm.self().goalie()
          && wm.gameMode().type() == GameMode::PlayOn
@@ -1582,7 +1602,11 @@ SampleCommunication::sayPlayers( PlayerAgent * agent )
     int mate_min = wm.interceptTable().opponentStep();
     int self_min = wm.interceptTable().opponentStep();
 
-    Vector2D opp_trap_pos = wm.ball().inertiaPoint( opp_min );
+    Vector2D opp_trap_pos;
+    if ( ! wm.ballPositionAt( opp_min, opp_trap_pos ) )
+    {
+        return false;
+    }
 
     if ( opp_min <= mate_min
          && opp_min <= self_min )
@@ -2235,6 +2259,11 @@ SampleCommunication::attentiontoSomeone( PlayerAgent * agent )
     const int self_min = wm.interceptTable().selfStep();
     const int mate_min = wm.interceptTable().teammateStep();
     const int opp_min = wm.interceptTable().opponentStep();
+    Vector2D mate_ball_pos;
+    if ( ! wm.ballPositionAt( mate_min, mate_ball_pos ) )
+    {
+        return;
+    }
 
     if ( fastest_teammate
          && fastest_teammate->unum() != Unum_Unknown
@@ -2242,7 +2271,7 @@ SampleCommunication::attentiontoSomeone( PlayerAgent * agent )
          && mate_min < self_min
          && mate_min <= opp_min + 1
          && mate_min <= 5 + std::min( 4, fastest_teammate->posCount() )
-         && wm.ball().inertiaPoint( mate_min ).dist2( agent->effector().queuedNextSelfPos() )
+         && mate_ball_pos.dist2( agent->effector().queuedNextSelfPos() )
          < std::pow( 35.0, 2 ) )
     {
         // set attention to ball nearest teammate

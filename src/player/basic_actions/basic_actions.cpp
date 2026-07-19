@@ -128,7 +128,11 @@ Body_TurnToBall::execute( PlayerAgent * agent )
         return false;
     }
 
-    Vector2D ball_point = agent->world().ball().inertiaPoint( M_cycle );
+    Vector2D ball_point;
+    if ( ! agent->world().ballPositionAt( M_cycle, ball_point ) )
+    {
+        return false;
+    }
 
     return Body_TurnToPoint( ball_point, M_cycle ).execute( agent );
 }

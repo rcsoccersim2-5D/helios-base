@@ -214,7 +214,10 @@ CrossGenerator::updatePasser( const WorldModel & wm )
         if ( s_min <= 2 )
         {
             M_passer = &wm.self();
-            M_first_point = wm.ball().inertiaPoint( s_min );
+            if ( ! wm.ballPositionAt( s_min, M_first_point ) )
+            {
+                return;
+            }
         }
     }
     else
@@ -222,7 +225,10 @@ CrossGenerator::updatePasser( const WorldModel & wm )
         if ( t_min <= 2 )
         {
             M_passer = wm.interceptTable().firstTeammate();
-            M_first_point = wm.ball().inertiaPoint( t_min );
+            if ( ! wm.ballPositionAt( t_min, M_first_point ) )
+            {
+                return;
+            }
         }
     }
 

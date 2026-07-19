@@ -111,6 +111,8 @@ KeepawayCommunication::attentiontoSomeone( PlayerAgent * agent )
     const int self_min = wm.interceptTable().selfStep();
     const int mate_min = wm.interceptTable().teammateStep();
     const int opp_min = wm.interceptTable().opponentStep();
+    Vector2D mate_ball_pos;
+    if ( ! wm.ballPositionAt( mate_min, mate_ball_pos ) ) return;
 
     if ( fastest_teammate
          && fastest_teammate->unum() != Unum_Unknown )
@@ -118,7 +120,7 @@ KeepawayCommunication::attentiontoSomeone( PlayerAgent * agent )
         if ( mate_min < self_min
              && mate_min <= opp_min + 1
              && mate_min <= 5 + std::min( 4, fastest_teammate->posCount() )
-             && wm.ball().inertiaPoint( mate_min ).dist2( agent->effector().queuedNextSelfPos() )
+             && mate_ball_pos.dist2( agent->effector().queuedNextSelfPos() )
              < std::pow( 35.0, 2 ) )
         {
             // set attention to ball nearest teammate

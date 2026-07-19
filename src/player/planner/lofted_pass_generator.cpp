@@ -39,6 +39,7 @@
 #include "field_analyzer.h"
 
 #include <rcsc/player/world_model.h>
+#include <rcsc/player/ball_trajectory.h>
 #include <rcsc/player/abstract_player_object.h>
 #include <rcsc/common/server_param.h>
 #include <rcsc/common/player_type.h>
@@ -112,6 +113,10 @@ LoftedPassGenerator::generate( const WorldModel & wm )
     clear();
 
     if ( ! wm.self().isKickable() )
+    {
+        return;
+    }
+    if ( ServerParam::i().is2dMode() )
     {
         return;
     }
@@ -204,62 +209,17 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     }
     const double first_speed = vel_xy.r();
 
-    const double z0 = ball_z;
-    const double g = SP.gravity();
     const double player_height = SP.playerHeight();
-
-    const double decay = SP.ballDecay();
-
-    // As of the 2026-07-10 physics rework the ball has ZERO horizontal
-    // friction while airborne -- ground_decay friction only applies once
-    // pos_z<=0 (rcssserver's Ball::incZ()/applyBounceEnergyLoss()). So the
-    // horizontal position is constant-velocity (ball_pos + vel_xy*t) for as
-    // long as the closed-form z(t) stays above 0; once it first lands, the
-    // usual decaying-velocity ground model (and one bounce-restitution
-    // scaling of the whole velocity vector) takes over for later steps.
-    bool landed = false;
-    Vector2D landed_pos;
-    Vector2D landed_vel;
-    double decay_sum_since_landing = 0.0;
-    double decay_pow_since_landing = 1.0;
+    const BallTrajectory3D trajectory
+        = BallTrajectory3D::hypothetical( Vector3D( ball_pos, ball_z ),
+                                           Vector3D( vel_xy, vz0 ) );
 
     for ( int t = 1; t <= MAX_SIMULATION_STEP; ++t )
     {
-        // closed-form vertical position (rcsc::InterceptSimulatorSelf3D's
-        // z(t) = z0 + t*vz0 - g*t*(t+1)/2 recurrence), unclamped so we can
-        // detect the exact step the ball first reaches the ground.
-        const double z_raw = z0 + t * vz0 - 0.5 * g * t * ( t + 1 );
-
-        Vector2D pos_t;
-        double z_t;
-
-        if ( ! landed && z_raw > 0.0 )
-        {
-            // still airborne: no horizontal friction at all.
-            pos_t = ball_pos + vel_xy * t;
-            z_t = z_raw;
-        }
-        else
-        {
-            if ( ! landed )
-            {
-                // first cycle the ball touches the ground: apply the
-                // ground-bounce restitution to the WHOLE velocity vector
-                // once (mirrors rcssserver's applyBounceEnergyLoss()), then
-                // fall back to the normal decaying ground-roll model.
-                landed = true;
-                landed_pos = ball_pos + vel_xy * t;
-                landed_vel = vel_xy * SP.ballBounceRestitution();
-                decay_sum_since_landing = 0.0;
-                decay_pow_since_landing = 1.0;
-            }
-
-            decay_sum_since_landing += decay_pow_since_landing;
-            decay_pow_since_landing *= decay;
-
-            pos_t = landed_pos + landed_vel * decay_sum_since_landing;
-            z_t = 0.0;
-        }
+        BallTrajectory3D::State state;
+        if ( ! trajectory.stateAt( t, state ) ) break;
+        const Vector2D pos_t = state.pos.xy();
+        const double z_t = state.pos.z;
 
         // out of pitch: this candidate is not viable, stop simulating it.
         if ( std::fabs( pos_t.x ) > SP.pitchHalfLength() + 5.0

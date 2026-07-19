@@ -73,7 +73,11 @@ Bhv_GoalieChaseBall::execute( PlayerAgent * agent )
     ////////////////////////////////////////////////////////////////////////
     // get active interception catch point
 
-    Vector2D my_int_pos = wm.ball().inertiaPoint( wm.interceptTable().selfStep() );
+    Vector2D my_int_pos;
+    if ( ! wm.ballPositionAt( wm.interceptTable().selfStep(), my_int_pos ) )
+    {
+        return false;
+    }
     dlog.addText( Logger::TEAM,
                   __FILE__": execute. intercept point=(%.2f %.2f)",
                   my_int_pos.x, my_int_pos.y );
@@ -362,7 +366,11 @@ Bhv_GoalieChaseBall::is_ball_chase_situation( const PlayerAgent  * agent )
     ////////////////////////////////////////////////////////////////////////
     // get active interception catch point
 
-    const Vector2D my_int_pos = wm.ball().inertiaPoint( wm.interceptTable().selfStep() );
+    Vector2D my_int_pos;
+    if ( ! wm.ballPositionAt( wm.interceptTable().selfStep(), my_int_pos ) )
+    {
+        return false;
+    }
 
     double pen_thr = wm.ball().distFromSelf() * 0.1 + 1.0;
     if ( pen_thr < 1.0 ) pen_thr = 1.0;

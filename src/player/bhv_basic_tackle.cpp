@@ -92,7 +92,11 @@ Bhv_BasicTackle::execute( PlayerAgent * agent )
     const int mate_min = wm.interceptTable().teammateStep();
     const int opp_min = wm.interceptTable().opponentStep();
 
-    const Vector2D self_reach_point = wm.ball().inertiaPoint( self_min );
+    Vector2D self_reach_point;
+    if ( ! wm.ballPositionAt( self_min, self_reach_point ) )
+    {
+        return false;
+    }
 
     //
     // check where the ball shall be gone without tackle

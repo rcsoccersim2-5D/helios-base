@@ -383,7 +383,11 @@ Bhv_SetPlayGoalKick::doIntercept( PlayerAgent * agent )
         return false;
     }
 
-    Vector2D trap_pos = wm.ball().inertiaPoint( self_min );
+    Vector2D trap_pos;
+    if ( ! wm.ballPositionAt( self_min, trap_pos ) )
+    {
+        trap_pos = wm.ball().pos();
+    }
     if ( ( trap_pos.x > ServerParam::i().ourPenaltyAreaLineX() - 8.0
            && trap_pos.absY() > ServerParam::i().penaltyAreaHalfWidth() - 5.0 )
          || wm.ball().vel().r2() < std::pow( 0.5, 2 ) )

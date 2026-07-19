@@ -47,7 +47,7 @@ class WorldModel;
 
 /*!
   \class LoftedPassGenerator
-  \brief coarse, closed-form generator of one-step lofted (airborne) pass
+  \brief coarse generator of one-step lofted (airborne) pass
   candidates for the ball holder, using the v20 3D ball extension.
 
   Deliberately much simpler than StrictCheckPassGenerator: it does not
@@ -55,10 +55,9 @@ class WorldModel;
   pass machinery. Instead it discretizes the search to a small, fixed
   grid -- 12 kick directions (0,30,...,330 deg) x 3 powers (50/80/100)
   x 3 loft angles (30/45/60 deg) = 108 candidate kicks per cycle -- and,
-  for each one, simulates the resulting airborne ball trajectory in
-  closed form (mirroring rcsc::InterceptSimulatorSelf3D's z(t) formula
-  and BallObject's decaying xy inertia model) to find the first cycle at
-  which the ball becomes reachable (height <= ServerParam::playerHeight())
+  for each one, simulates the resulting ball trajectory through
+  rcsc::BallTrajectory3D to find the first cycle at which the ball becomes
+  reachable (height <= ServerParam::playerHeight())
   and, at that point, which player (teammate or opponent) is nearest.
   Candidates that would first become reachable by an opponent, or that
   leave the pitch before becoming reachable, are discarded; candidates

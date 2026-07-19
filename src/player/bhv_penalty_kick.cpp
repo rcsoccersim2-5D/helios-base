@@ -990,7 +990,11 @@ Bhv_PenaltyKick::doGoalieBasicMove( PlayerAgent * agent )
     ////////////////////////////////////////////////////////////////////////
     // get active interception catch point
     const int self_min = wm.interceptTable().selfStep();
-    Vector2D move_pos = wm.ball().inertiaPoint( self_min );
+    Vector2D move_pos;
+    if ( ! wm.ballPositionAt( self_min, move_pos ) )
+    {
+        move_pos = wm.ball().pos();
+    }
 
     if ( our_penalty.contains( move_pos ) )
     {

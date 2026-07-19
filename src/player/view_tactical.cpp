@@ -110,7 +110,11 @@ View_Tactical::doDefault( PlayerAgent * agent )
     int opp_min = wm.interceptTable().opponentStep();
     int ball_reach_cycle = std::min( self_min, std::min( mate_min, opp_min ) );
 
-    const Vector2D ball_pos = wm.ball().inertiaPoint( ball_reach_cycle );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( ball_reach_cycle, ball_pos ) )
+    {
+        ball_pos = wm.ball().pos();
+    }
     const double ball_dist = agent->effector().queuedNextSelfPos().dist( ball_pos );
 
     if ( wm.self().goalie()

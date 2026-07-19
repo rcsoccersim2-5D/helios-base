@@ -115,8 +115,15 @@ Body_Intercept2018::execute( PlayerAgent * agent )
 
     // debug output
     {
-        Vector2D ball_pos = wm.ball().inertiaPoint( best_intercept.reachStep() );
-        agent->debugClient().setTarget( ball_pos );
+        Vector2D ball_pos;
+        if ( wm.ballPositionAt( best_intercept.reachStep(), ball_pos ) )
+        {
+            agent->debugClient().setTarget( ball_pos );
+
+            dlog.addText( Logger::INTERCEPT,
+                          __FILE__": ball pos=(%.2f %.2f)",
+                          ball_pos.x, ball_pos.y );
+        }
 
         dlog.addText( Logger::INTERCEPT,
                       __FILE__": solution size=%d. best_cycle=%d"
@@ -125,9 +132,6 @@ Body_Intercept2018::execute( PlayerAgent * agent )
                       best_intercept.reachStep(),
                       best_intercept.turnStep(), best_intercept.dashStep(),
                       best_intercept.dashPower(), best_intercept.dashDir() );
-        dlog.addText( Logger::INTERCEPT,
-                      __FILE__": ball pos=(%.2f %.2f)",
-                      ball_pos.x, ball_pos.y );
     }
 
     if ( doOneStepTurn( agent, best_intercept ) )
@@ -221,7 +225,8 @@ Body_Intercept2018::doFirstTurn( PlayerAgent * agent,
     const WorldModel & wm = agent->world();
 
     const Vector2D self_pos = wm.self().inertiaPoint( info.reachStep() );
-    const Vector2D ball_pos = wm.ball().inertiaPoint( info.reachStep() );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( info.reachStep(), ball_pos ) ) return false;
 
     AngleDeg ball_angle = ( ball_pos - self_pos ).th();
     if ( info.dashPower() < 0.0 )
@@ -280,7 +285,8 @@ Body_Intercept2018::doDashWait( PlayerAgent * agent,
     const WorldModel & wm = agent->world();
 
     const Vector2D self_pos = wm.self().inertiaPoint( info.reachStep() );
-    const Vector2D ball_pos = wm.ball().inertiaPoint( info.reachStep() );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( info.reachStep(), ball_pos ) ) return false;
     const bool goalie_mode = ( wm.self().goalie()
                                && wm.lastKickerSide() != wm.ourSide()
                                && ball_pos.x < ServerParam::i().ourPenaltyAreaLineX()
@@ -513,10 +519,13 @@ Body_Intercept2018::get_best_intercept_player( const WorldModel & wm,
                       type_char( v.info_->actionType() ),
                       v.info_->turnStep(), v.info_->dashStep(),
                       v.info_->turnAngle(), v.info_->dashPower(), v.info_->dashDir() );
-        const Vector2D ball_pos = wm.ball().inertiaPoint( v.info_->reachStep() );
-        dlog.addCircle( Logger::INTERCEPT,
-                        ball_pos.x, ball_pos.y, 0.2,
-                        "#000000");
+        Vector2D ball_pos;
+        if ( wm.ballPositionAt( v.info_->reachStep(), ball_pos ) )
+        {
+            dlog.addCircle( Logger::INTERCEPT,
+                            ball_pos.x, ball_pos.y, 0.2,
+                            "#000000");
+        }
 
         // dlog.addCircle( Logger::INTERCEPT,
         //                 v.info_->selfPos().x,
@@ -548,11 +557,14 @@ Body_Intercept2018::get_best_intercept_player( const WorldModel & wm,
                       best->info_->dashPower(), best->info_->dashDir(),
                       best->value_ );
 
-        const Vector2D ball_pos = wm.ball().inertiaPoint( best->info_->reachStep() );
-        dlog.addCircle( Logger::INTERCEPT,
-                        ball_pos.x, ball_pos.y, 0.1,
-                        "#000000",
-                        true );
+        Vector2D ball_pos;
+        if ( wm.ballPositionAt( best->info_->reachStep(), ball_pos ) )
+        {
+            dlog.addCircle( Logger::INTERCEPT,
+                            ball_pos.x, ball_pos.y, 0.1,
+                            "#000000",
+                            true );
+        }
 
         dlog.addText( Logger::INTERCEPT, "==========" );
 #endif
@@ -612,7 +624,8 @@ Body_Intercept2018::get_best_intercept_goalie( const WorldModel & wm )
           it != end;
           ++it, ++count )
     {
-        const Vector2D ball_pos = wm.ball().inertiaPoint( it->reachStep() );
+        Vector2D ball_pos;
+        if ( ! wm.ballPositionAt( it->reachStep(), ball_pos ) ) continue;
         const AngleDeg body_angle = wm.self().body() + it->turnAngle();
         const double control_area = ( ball_pos.x < SP.ourPenaltyAreaLineX() - 0.5
                                       && ball_pos.absY() < SP.penaltyAreaHalfWidth() - 0.5

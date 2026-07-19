@@ -574,7 +574,11 @@ Strategy::updatePosition( const WorldModel & wm )
         ball_step = std::min( ball_step, wm.interceptTable().selfStep() );
     }
 
-    Vector2D ball_pos = wm.ball().inertiaPoint( ball_step );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( ball_step, ball_pos ) )
+    {
+        ball_pos = wm.ball().pos();
+    }
 
     dlog.addText( Logger::TEAM,
                   __FILE__": HOME POSITION: ball pos=(%.1f %.1f) step=%d",
@@ -598,8 +602,12 @@ Strategy::updatePosition( const WorldModel & wm )
             int mate_step = wm.interceptTable().teammateStep();
             if ( mate_step < 50 )
             {
-                Vector2D trap_pos = wm.ball().inertiaPoint( mate_step );
-                if ( trap_pos.x > max_x ) max_x = trap_pos.x;
+                Vector2D trap_pos;
+                if ( wm.ballPositionAt( mate_step, trap_pos )
+                     && trap_pos.x > max_x )
+                {
+                    max_x = trap_pos.x;
+                }
             }
 
             max_x -= 1.0;
@@ -886,7 +894,12 @@ Strategy::get_ball_area( const WorldModel & wm )
     ball_step = std::min( ball_step, wm.interceptTable().opponentStep() );
     ball_step = std::min( ball_step, wm.interceptTable().selfStep() );
 
-    return get_ball_area( wm.ball().inertiaPoint( ball_step ) );
+    Vector2D ball_pos;
+    if ( ! wm.ballPositionAt( ball_step, ball_pos ) )
+    {
+        ball_pos = wm.ball().pos();
+    }
+    return get_ball_area( ball_pos );
 }
 
 /*-------------------------------------------------------------------*/

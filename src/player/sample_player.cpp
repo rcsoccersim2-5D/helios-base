@@ -764,7 +764,11 @@ SamplePlayer::doHeardPassReceive()
     }
 
     int self_min = wm.interceptTable().selfStep();
-    Vector2D intercept_pos = wm.ball().inertiaPoint( self_min );
+    Vector2D intercept_pos;
+    if ( ! wm.ballPositionAt( self_min, intercept_pos ) )
+    {
+        intercept_pos = wm.ball().pos();
+    }
     Vector2D heard_pos = wm.audioMemory().pass().front().receive_pos_;
 
     dlog.addText( Logger::TEAM,
