@@ -149,6 +149,7 @@ Body_TackleToPoint::execute( PlayerAgent * agent )
     const ServerParam & sp = ServerParam::i();
 
     if ( ! sp.is2dMode()
+         && wm.ball().posZValid()
          && wm.ball().posZ() > sp.tackleHeight() )
     {
         return false;

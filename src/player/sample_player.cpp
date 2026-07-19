@@ -652,19 +652,19 @@ SamplePlayer::doPreprocess()
   falling through to the (grounded-ball-only) shoot/pass/dribble chain.
 
   For a 2d_mode=true server (or any server not negotiating protocol
-  version >= 20), wm.ball().posZ() is always 0, so this method
-  always returns false immediately -- zero behavior change for legacy
-  servers, the rest of doPreprocess()'s chain runs exactly as before.
+  version >= 20), ball height is unavailable or grounded, so this method
+  returns false and the ordinary shoot/pass/dribble chain runs as before.
 */
 bool
 SamplePlayer::doTrapAirborneBall()
 {
     const WorldModel & wm = this->world();
 
-    if ( wm.ball().posZ() <= 0.0 )
+    if ( ! wm.ball().posZValid()
+         || wm.ball().posZ() <= 0.0 )
     {
-        // ball is grounded (or a 2d_mode=true / pre-v20 server): nothing
-        // to do here, let the existing shoot/pass/dribble chain handle it.
+        // Ball height is unavailable/stale or grounded: let the existing
+        // shoot/pass/dribble chain handle it.
         return false;
     }
 

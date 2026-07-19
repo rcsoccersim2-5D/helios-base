@@ -58,6 +58,7 @@ Bhv_BasicTackle::execute( PlayerAgent * agent )
     const WorldModel & wm = agent->world();
 
     if ( ! SP.is2dMode()
+         && wm.ball().posZValid()
          && wm.ball().posZ() > SP.tackleHeight() )
     {
         dlog.addText( Logger::TEAM,

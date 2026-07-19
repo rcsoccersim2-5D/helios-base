@@ -44,12 +44,13 @@
   (basic_actions/body_stop_ball.h), which only ever worked on a grounded ball
   and is left completely untouched by this class.
 
-  execute() only issues the command when `wm.ball().posZ() > 0.0 &&
-  wm.self().isKickable()`, mirroring the server's own silent-reject gate on
-  `chest_trap` (rejected when the ball is not kickable) -- there is no point
-  sending the command when the server will silently ignore it. Declines
-  (`return false`) for the grounded-ball case, in which case a caller should
-  use `Body_StopBall` (or an ordinary kick) instead.
+  execute() only issues the command when a fresh `wm.ball().posZ() > 0.0`
+  observation exists and `wm.self().isKickable()`, mirroring the server's
+  own silent-reject gate on `chest_trap` (rejected when the ball is not
+  kickable) -- there is no point sending the command when the server will
+  silently ignore it. Declines (`return false`) for unavailable, stale, or
+  grounded height, in which case a caller should use `Body_StopBall` (or an
+  ordinary kick) instead.
 */
 class Body_TrapBall3D
     : public rcsc::BodyAction {

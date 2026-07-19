@@ -228,6 +228,7 @@ TackleGenerator::generate( const WorldModel & wm )
     }
 
     if ( ! ServerParam::i().is2dMode()
+         && wm.ball().posZValid()
          && wm.ball().posZ() > ServerParam::i().tackleHeight() )
     {
         // dlog.addText( Logger::CLEAR,

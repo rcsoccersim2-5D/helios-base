@@ -168,6 +168,9 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     const Vector2D ball_vel = ( wm.ball().velValid()
                                ? wm.ball().vel()
                                : Vector2D( 0.0, 0.0 ) );
+    const double ball_z = ( wm.ball().posZValid()
+                            ? wm.ball().posZ()
+                            : 0.0 );
 
     //
     // forward kick model: same (power, kickRate) -> ground-plane speed
@@ -179,7 +182,7 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     // extra cost for aiming upward (loft_power_cost was removed).
     //
     const double loft_rad = loft_deg * M_PI / 180.0;
-    const double height_frac = std::max( 0.0, wm.ball().posZ() ) / SP.playerHeight();
+    const double height_frac = std::max( 0.0, ball_z ) / SP.playerHeight();
 
     double eff_power_total = power * wm.self().kickRate();
     eff_power_total *= ( 1.0 - SP.heightPowerCost() * height_frac );
@@ -201,7 +204,7 @@ LoftedPassGenerator::simulateCandidate( const WorldModel & wm,
     }
     const double first_speed = vel_xy.r();
 
-    const double z0 = wm.ball().posZ();
+    const double z0 = ball_z;
     const double g = SP.gravity();
     const double player_height = SP.playerHeight();
 

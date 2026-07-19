@@ -52,9 +52,11 @@ Body_TrapBall3D::execute( PlayerAgent * agent )
 
     const WorldModel & wm = agent->world();
 
-    if ( wm.ball().posZ() <= 0.0 )
+    if ( ! wm.ball().posZValid()
+         || wm.ball().posZ() <= 0.0 )
     {
-        // ball is grounded: this class only targets the airborne case.
+        // Ball height is unavailable/stale or grounded: this class only
+        // targets a fresh airborne observation.
         // caller should use the existing Body_StopBall (or an ordinary kick)
         // instead.
         dlog.addText( Logger::ACTION,
